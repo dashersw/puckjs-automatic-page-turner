@@ -1,0 +1,46 @@
+.button {
+  height: 100px;
+  width: 100px;
+  border-radius: 50px;
+  border: 1px solid #666;
+  background-color: #aaa;
+}
+
+.button:active {
+  background-color: #999;
+}
+
+#leds {
+  display: flex;
+}
+
+.led {
+  height: 50px;
+  width: 50px;
+  border-radius: 25px;
+  margin: 10px;
+}
+
+.led.red {
+  border: 1px solid red;
+}
+
+.led.red.on {
+  background: red;
+}
+
+.led.green {
+  border: 1px solid green;
+}
+
+.led.green.on {
+  background: green;
+}
+
+.led.blue {
+  border: 1px solid blue;
+}
+
+.led.blue.on {
+  background: blue;
+}
