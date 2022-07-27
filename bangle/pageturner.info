@@ -1,0 +1,5 @@
+{
+  "name": "Page Turner",
+  "src": "pageturner.app.js",
+  "icon": "pageturner.img",
+}
