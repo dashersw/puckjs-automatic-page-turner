@@ -1,150 +1,157 @@
-const kb = require('ble_hid_keyboard')
-require('FontCopasetic40x58Numeric').add(Graphics)
+const kb = require('ble_hid_keyboard');
+require('FontCopasetic40x58Numeric').add(Graphics);
 
-const STATE = {}
+const STATE = {};
 
 const DEFAULT_STATE = {
   counter: 42,
   duration: 42,
   interval: 0,
   status: 'paused',
-}
+};
+
+const Layout = require('Layout');
 
 function resetState() {
-  STATE.counter = DEFAULT_STATE.duration
-  STATE.duration = DEFAULT_STATE.duration
-  STATE.interval = DEFAULT_STATE.interval
-  STATE.status = DEFAULT_STATE.status
+  STATE.counter = DEFAULT_STATE.duration;
+  STATE.duration = DEFAULT_STATE.duration;
+  STATE.interval = DEFAULT_STATE.interval;
+  STATE.status = DEFAULT_STATE.status;
 }
 
 function init() {
-  NRF.setServices(undefined, { hid: kb.report })
+  NRF.setServices(undefined, { hid: kb.report });
 
-  Bangle.loadWidgets()
-  Bangle.drawWidgets()
+  Bangle.loadWidgets();
+  Bangle.drawWidgets();
 
-  Bangle.setLCDMode('doublebuffered')
-
-  resetState()
-  updateScreen()
+  resetState();
+  g.clear();
+  updateScreen();
 }
 
 function toggleStatus() {
-  STATE.status = STATE.status == 'paused' ? 'running' : 'paused'
+  STATE.status = STATE.status == 'paused' ? 'running' : 'paused';
 
   if (STATE.status == 'paused') {
-    stopCountdown()
+    stopCountdown();
   } else {
-    restartCountdown()
+    restartCountdown();
   }
 
-  updateScreen()
+  updateScreen();
 }
 
 function resetCounter() {
-  STATE.counter = STATE.duration
-  restartCountdown()
-  updateScreen()
+  STATE.counter = STATE.duration;
+  restartCountdown();
+  updateScreen();
 }
 
 function prev() {
-  resetCounter()
-  kb.tap(kb.KEY.LEFT, 0)
+  resetCounter();
+  kb.tap(kb.KEY.LEFT, 0);
 }
 
 function next() {
-  resetCounter()
-  kb.tap(kb.KEY.RIGHT, 0)
+  resetCounter();
+  kb.tap(kb.KEY.RIGHT, 0);
 }
 
 function countDown() {
-  if (STATE.status == 'paused') return
+  if (STATE.status == 'paused') return;
 
-  STATE.counter--
+  STATE.counter--;
 
-  STATE.counter = Math.max(STATE.counter, -1)
+  STATE.counter = Math.max(STATE.counter, -1);
 
   if (STATE.counter == 0) {
-    kb.tap(kb.KEY.RIGHT, 0)
+    kb.tap(kb.KEY.RIGHT, 0);
   } else if (STATE.counter == -1) {
-    resetCounter()
+    resetCounter();
   }
 
-  updateScreen()
+  updateScreen();
 }
 
 function updateScreen() {
-  g.clearRect(0, 0, 240, 160)
-  Bangle.drawWidgets()
+  g.clear();
+  Bangle.drawWidgets();
 
-  g.setColor(1, 1, 1)
+  layout.status.label = `status: ${STATE.status}`;
 
-  g.setFontAlign(0, 0)
-  g.setFont('Vector', 20)
-  g.drawString('status: ' + STATE.status, g.getWidth() / 2, 40)
+  layout.duration.label = `duration: ${STATE.duration}`;
 
-  g.setFontAlign(0, 0)
-  g.setFont('Vector', 30)
-  g.drawString('duration: ' + STATE.duration, g.getWidth() / 2, g.getHeight() / 2 - 8)
+  layout.counter.label = STATE.counter;
 
-  g.setFontAlign(0, 0)
-  g.setFont('Copasetic40x58Numeric', 1.2)
-  g.drawString(STATE.counter, g.getWidth() / 2, g.getHeight() / 2 + 50)
+  layout.play.label = STATE.status == 'paused' ? 'run' : 'stop';
 
-  g.flip()
+  layout.render();
 }
 
 function stopCountdown() {
-  clearInterval(STATE.interval)
+  clearInterval(STATE.interval);
 }
 
 function restartCountdown() {
-  stopCountdown()
-  STATE.interval = setInterval(countDown, 1000)
+  stopCountdown();
+  STATE.interval = setInterval(countDown, 1000);
 }
 
 function increaseDuration() {
-  STATE.duration++
-  STATE.counter++
+  STATE.duration++;
+  STATE.counter++;
 
-  restartCountdown()
-  updateScreen()
+  restartCountdown();
+  updateScreen();
 }
 
 function decreaseDuration() {
-  if (STATE.duration < 3) return restartCountdown()
+  if (STATE.duration < 3) return restartCountdown();
 
-  STATE.duration--
+  STATE.duration--;
 
-  if (STATE.counter > 0) STATE.counter--
+  if (STATE.counter > 0) STATE.counter--;
 
-  restartCountdown()
-  updateScreen()
+  restartCountdown();
+  updateScreen();
 }
 
-setWatch(increaseDuration, BTN1, { repeat: true })
-setWatch(decreaseDuration, BTN3, { repeat: true })
-setWatch(toggleStatus, BTN2, { repeat: true })
-
 Bangle.on('swipe', (dir) => {
-  if (dir == 1) prev()
-  else next()
-})
+  if (dir == 1) prev();
+  else next();
+});
 
-Bangle.on('touch', function (button) {
-  switch (button) {
-    case 1:
-      prev()
-      break
-    case 2:
-      next()
-      break
-    case 3:
-      toggleStatus()
-      break
+const layout = new Layout(
+  {
+    type: 'v',
+    c: [
+      { type: 'txt', font: '10%', label: STATE.status, id: 'status' },
+      { type: 'txt', font: '15%', label: STATE.status, id: 'duration' },
+      { type: 'txt', font: '25%', label: STATE.counter, id: 'counter' },
+      {
+        type: 'h',
+        c: [
+          { type: 'btn', font: '10%', label: 'slower', cb: increaseDuration },
+          { type: 'btn', font: '10%', label: 'faster', cb: decreaseDuration },
+        ],
+      },
+      {
+        type: 'h',
+        c: [
+          { type: 'btn', font: '10%', label: 'prev', cb: prev },
+          { type: 'btn', font: '10%', label: 'next', cb: next },
+        ],
+      },
+    ],
+    // lazy: true,
+  },
+  {
+    btns: [{ label: 'play', id: 'play', cb: toggleStatus }],
+    // lazy: true,
   }
-})
+);
 
-init()
+// Bangle.on('tap', toggleStatus);
 
-// setWatch(Bangle.showLauncher, BTN2, { repeat: false, edge: "falling" });
+init();
